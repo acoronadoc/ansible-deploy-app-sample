@@ -1,0 +1,6 @@
+[bbdd]
+127.17.22.145 ansible_ssh_user=root 
+
+[front]
+127.17.21.119 ansible_ssh_user=root
+

@@ -1,0 +1,80 @@
+---
+- hosts: all
+
+  vars:
+    mariadb_root_password: "testpassword1"
+    mariadb_database: "youtube"
+
+  tasks:
+  # Servidor Base de daros
+  - name: Install mariadb-server
+    apt:
+      name: 'mariadb-server'
+      state: 'present'
+      install_recommends: False
+      update_cache: True
+    when: hostvars[inventory_hostname].group_names[0] == "bbdd"
+
+  - name: Configure database for external connections
+    shell: "echo \"[mysqld]\nskip-networking=0\nskip-bind-address\" >> /etc/mysql/my.cnf"
+    when: hostvars[inventory_hostname].group_names[0] == "bbdd"
+
+  - name: Restart the database server
+    service:
+      name: 'mysql'
+      state: 'restarted'
+    when: hostvars[inventory_hostname].group_names[0] == "bbdd"
+
+  - name: Copy init database script
+    template:
+      src: templates/init-database.sql.j2
+      dest: /init-database.sql
+    when: hostvars[inventory_hostname].group_names[0] == "bbdd"
+
+  - name: Copy init database data
+    copy:
+      src: data/data.csv
+      dest: /data.csv
+    when: hostvars[inventory_hostname].group_names[0] == "bbdd"
+
+  - name: Execute init database script
+    shell: "mysql -uroot -p{{ mariadb_root_password }} < /init-database.sql"
+    when: hostvars[inventory_hostname].group_names[0] == "bbdd"
+
+  - name: Execute init database script
+    shell: mysql -sN -e 'select count(*) from youtube.subscribers'
+    when: hostvars[inventory_hostname].group_names[0] == "bbdd"
+    register: regcount
+
+  - name: Initi Database
+    shell: mysql -e "LOAD DATA INFILE '/data.csv' INTO TABLE {{ mariadb_database }}.subscribers FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' IGNORE 1 ROWS (date, video, video_title, subscribers)"
+    when: hostvars[inventory_hostname].group_names[0] == "bbdd" and regcount.stdout=="0"
+
+  # Servidor aplicación Java/Spring
+  - name: Install jdk8
+    apt:
+      name: 'openjdk-8-jdk'
+      state: 'present'
+      install_recommends: False
+      update_cache: True
+    when: hostvars[inventory_hostname].group_names[0] == "front"
+
+  - name: Install Cron
+    apt:
+      name: 'cron'
+      state: 'present'
+      install_recommends: False
+      update_cache: True
+    when: hostvars[inventory_hostname].group_names[0] == "front"
+
+  - name: Configure Cron
+    shell: "echo \"@reboot /init.sh\" | crontab -"
+    when: hostvars[inventory_hostname].group_names[0] == "front"
+
+  - name: Configure App Properties
+    template:
+      src: templates/application.properties.j2
+      dest: /application.properties
+    when: hostvars[inventory_hostname].group_names[0] == "front"
+
+

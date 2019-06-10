@@ -1,0 +1,25 @@
+---
+- hosts: front
+
+  vars:
+    jar_file_name: "YoutubeData-0.0.1-SNAPSHOT.jar"
+
+  tasks:
+  - name: Download app
+    get_url:
+      url: "https://github.com/acoronadoc/spring-security-dashboard-sample/raw/master/target/{{ jar_file_name }}"
+      dest: /
+
+  - name: Copy init script
+    template:
+      src: templates/init.sh.j2
+      dest: /init.sh
+
+  - name: Configure init as executable
+    shell: "chmod 777 /init.sh"
+
+  - name: Reboot
+    reboot:
+
+
+

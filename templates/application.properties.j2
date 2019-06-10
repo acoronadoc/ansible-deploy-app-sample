@@ -1,0 +1,9 @@
+server.port=80
+
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
+spring.jpa.database=mysql
+{% for host in groups['bbdd'] %}
+spring.datasource.url=jdbc:mysql://{{ hostvars[host]['ansible_all_ipv4_addresses'][0] }}/{{ mariadb_database }}?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC
+{% endfor %}
+spring.datasource.username=root
+spring.datasource.password={{ mariadb_root_password }}

@@ -1,0 +1,11 @@
+CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '{{ mariadb_root_password }}'; 
+FLUSH PRIVILEGES;
+
+CREATE DATABASE IF NOT EXISTS {{ mariadb_database }};
+
+CONNECT {{ mariadb_database }};
+CREATE TABLE IF NOT EXISTS subscribers(date TIMESTAMP, video VARCHAR(75), video_title VARCHAR(75), subscribers INT);
+
+GRANT ALL PRIVILEGES ON {{ mariadb_database }}.* TO 'root'@'%' WITH GRANT OPTION; 
+FLUSH PRIVILEGES;
+
